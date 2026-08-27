@@ -1,0 +1,8 @@
+/target/
+debug.log
+*.log
+.DS_Store
+
+# Local exports and session snapshots are intentionally ignored.
+/exports/
+*.scanner-session.json

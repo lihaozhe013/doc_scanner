@@ -1,11 +1,10 @@
 # Document Scanner: Product and Engineering Plan
 
-Status: Proposed
+Status: In progress — Milestones 0–1 and the initial native GUI workflow are implemented.
 
-This document is an implementation blueprint for a new repository. It is
-intended to be handed to an implementation agent after the new repository has
-been created. It describes planned behavior; it does not change the behavior
-of the current Python prototype.
+This document remains the implementation blueprint for the repository. The
+implemented behavior is summarized in `README.md`; milestones below continue
+to describe planned work that has not yet been completed.
 
 ## 1. Executive Decision
 
@@ -697,4 +696,3 @@ A feature is complete only when:
   image outputs are committed.
 - Documentation clearly labels implemented, planned, unsupported, and
   experimental behavior.
-

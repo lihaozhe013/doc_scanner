@@ -1,0 +1,12 @@
+[package]
+name = "scanner-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Headless batch surface for Document Scanner"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+scanner-core.workspace = true
