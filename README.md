@@ -14,6 +14,8 @@ Implemented in this repository:
   perspective correction, deterministic enhancement presets, and safe export.
 - A native `eframe`/`egui` desktop shell with file/folder import, a page queue,
   draggable document corners, asynchronous previews, and selected/batch export.
+- A bundled Source Han Sans SC font is the primary font for both proportional
+  and monospace UI text on every supported platform.
 - Versioned session metadata serialization and focused unit/integration tests.
 - An optional OpenCV adapter feature boundary for environments that provide a
   compatible native OpenCV installation.
