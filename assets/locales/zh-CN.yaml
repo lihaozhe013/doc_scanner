@@ -1,0 +1,112 @@
+# Simplified Chinese (zh-CN) UI strings for Document Scanner.
+# Keys must stay in sync with en-US.yaml (enforced by tests).
+
+app:
+  title: "文档扫描仪"
+
+toolbar:
+  open_files: "打开文件"
+  open_files_hint: "打开文件（O）"
+  open_folder: "打开文件夹"
+  previous: "上一页"
+  previous_hint: "上一页（P）"
+  next: "下一页"
+  next_hint: "下一页（N）"
+  accept_next: "接受并下一页"
+  accept_next_hint: "接受当前页并转到下一页（Enter）"
+  save_session: "保存会话"
+  save_session_hint: "保存会话（Ctrl/Cmd+S）"
+  load_session: "加载会话"
+  export_selected: "导出所选"
+  export_selected_hint: "导出所选页面（Ctrl/Cmd+E）"
+  export_all: "导出全部"
+  cancel: "取消"
+  language: "语言"
+
+language:
+  auto: "跟随系统"
+  english: "English"
+  chinese: "简体中文"
+
+dialogs:
+  raster_images: "位图图像"
+  session_filter: "扫描仪会话"
+
+canvas:
+  label: "画布"
+  fit: "适应窗口"
+  fit_hint: "重置视图（R）"
+  zoom: "缩放"
+  output_preview: "输出预览：{width} × {height} · 修订 {revision}"
+  source: "原图"
+  processed_preview: "处理预览"
+  preview_size: "{width} × {height} · 修订 {revision}"
+  preview_placeholder: "处理后的预览将显示在此处。"
+  import_prompt: "导入页面以开始"
+  empty_hint: "打开图像以开始扫描"
+  preparing: "正在准备预览…"
+
+queue:
+  title: "页面"
+  empty: "尚未导入任何页面。"
+  empty_hint: "使用“打开文件”或“打开文件夹”开始。"
+
+status:
+  not_started: "未开始"
+  loading: "加载中"
+  ready: "就绪"
+  previewing: "预览中"
+  queued: "已排队"
+  processing: "处理中"
+  completed: "已完成"
+  skipped: "已跳过"
+  failed: "失败"
+  cancelled: "已取消"
+
+inspector:
+  title: "检视面板"
+  no_selection: "选择一个页面以编辑其透视校正和增强设置。"
+  enhancement: "增强"
+  output: "输出"
+  jpeg_quality: "JPEG 质量"
+  apply_all: "将当前预设应用到全部"
+  channels: "{width} × {height} · {channels} 通道"
+  undo: "撤销"
+  redo: "重做"
+  reset_quad: "重置选区"
+
+preset:
+  original: "原图"
+  adaptive_black_and_white: "自适应黑白"
+  enhanced_color: "增强彩色"
+  magic_color: "魔法色彩"
+  original_hint: "不做增强"
+  block_size: "块大小"
+  offset: "偏移"
+  brightness: "亮度"
+  contrast: "对比度"
+  denoise: "降噪"
+  sharpen: "锐化"
+  local_contrast: "局部对比度"
+  saturation: "饱和度"
+
+messages:
+  ready: "就绪"
+  session: "会话：{file}"
+  exported: "已导出 {file}"
+  export_failed: "导出失败：{error}"
+  export_cancelled: "导出已取消"
+  preview_failed: "预览失败：{error}"
+  load_failed: "{name}：{error}"
+  folder_read_failed: "无法读取文件夹：{error}"
+  pages_in_queue: "队列中有 {count} 页"
+  nothing_to_export: "没有已加载、可导出的页面"
+  not_loaded: "{name} 尚未加载完成"
+  cancellation_requested: "已请求取消"
+  saved_session: "已保存会话 {file}"
+  save_session_failed: "无法保存会话：{error}"
+  loaded_session: "已加载会话 {file}"
+  load_session_failed: "无法加载会话：{error}"
+  applied_to_all: "已将增强设置应用到所有已加载页面"
+  failed_count: "{count} 项失败"
+  preferences_save_failed: "无法保存偏好设置：{error}"

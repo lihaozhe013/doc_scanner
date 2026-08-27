@@ -16,6 +16,9 @@ Implemented in this repository:
   draggable document corners, asynchronous previews, and selected/batch export.
 - A bundled Source Han Sans SC font is the primary font for both proportional
   and monospace UI text on every supported platform.
+- English and Simplified Chinese UI localization with system-locale auto
+  detection, a runtime language switcher, and a persisted preference
+  (see [docs/I18N.md](docs/I18N.md)).
 - Versioned session metadata serialization and focused unit/integration tests.
 - An optional OpenCV adapter feature boundary for environments that provide a
   compatible native OpenCV installation.
@@ -65,3 +68,4 @@ when a collision occurs.
 - [Native core architecture decision](docs/ADR-0001-native-core.md)
 - [Dependency version notes](docs/DEPENDENCY_NOTES.md)
 - [Manual GUI verification](docs/MANUAL_TESTING.md)
+- [Internationalization design](docs/I18N.md)

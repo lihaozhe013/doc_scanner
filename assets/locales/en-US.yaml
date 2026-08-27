@@ -1,0 +1,112 @@
+# English (en-US) UI strings for Document Scanner.
+# Keys must stay in sync with zh-CN.yaml (enforced by tests).
+
+app:
+  title: "Document Scanner"
+
+toolbar:
+  open_files: "Open files"
+  open_files_hint: "Open files (O)"
+  open_folder: "Open folder"
+  previous: "Previous"
+  previous_hint: "Previous page (P)"
+  next: "Next"
+  next_hint: "Next page (N)"
+  accept_next: "Accept & next"
+  accept_next_hint: "Accept current page and move to next (Enter)"
+  save_session: "Save session"
+  save_session_hint: "Save session (Ctrl/Cmd+S)"
+  load_session: "Load session"
+  export_selected: "Export selected"
+  export_selected_hint: "Export selected page (Ctrl/Cmd+E)"
+  export_all: "Export all"
+  cancel: "Cancel"
+  language: "Language"
+
+language:
+  auto: "System default"
+  english: "English"
+  chinese: "简体中文"
+
+dialogs:
+  raster_images: "Raster images"
+  session_filter: "Scanner session"
+
+canvas:
+  label: "Canvas"
+  fit: "Fit"
+  fit_hint: "Reset view (R)"
+  zoom: "Zoom"
+  output_preview: "Output preview: {width} × {height} · revision {revision}"
+  source: "Source"
+  processed_preview: "Processed preview"
+  preview_size: "{width} × {height} · revision {revision}"
+  preview_placeholder: "The processed preview will appear here."
+  import_prompt: "Import pages to begin"
+  empty_hint: "Open an image to start scanning"
+  preparing: "Preparing preview…"
+
+queue:
+  title: "Pages"
+  empty: "No pages imported yet."
+  empty_hint: "Use Open files or Open folder to begin."
+
+status:
+  not_started: "Not started"
+  loading: "Loading"
+  ready: "Ready"
+  previewing: "Previewing"
+  queued: "Queued"
+  processing: "Processing"
+  completed: "Completed"
+  skipped: "Skipped"
+  failed: "Failed"
+  cancelled: "Cancelled"
+
+inspector:
+  title: "Inspector"
+  no_selection: "Select a page to edit its perspective and enhancement settings."
+  enhancement: "Enhancement"
+  output: "Output"
+  jpeg_quality: "JPEG quality"
+  apply_all: "Apply current preset to all"
+  channels: "{width} × {height} · {channels} channels"
+  undo: "Undo"
+  redo: "Redo"
+  reset_quad: "Reset quad"
+
+preset:
+  original: "Original"
+  adaptive_black_and_white: "Adaptive black and white"
+  enhanced_color: "Enhanced color"
+  magic_color: "Magic color"
+  original_hint: "No enhancement"
+  block_size: "Block size"
+  offset: "Offset"
+  brightness: "Brightness"
+  contrast: "Contrast"
+  denoise: "Denoise"
+  sharpen: "Sharpen"
+  local_contrast: "Local contrast"
+  saturation: "Saturation"
+
+messages:
+  ready: "Ready"
+  session: "Session: {file}"
+  exported: "Exported {file}"
+  export_failed: "Export failed: {error}"
+  export_cancelled: "Export cancelled"
+  preview_failed: "Preview failed: {error}"
+  load_failed: "{name}: {error}"
+  folder_read_failed: "Could not read folder: {error}"
+  pages_in_queue: "{count} page(s) in queue"
+  nothing_to_export: "No loaded pages are ready to export"
+  not_loaded: "{name} is not loaded yet"
+  cancellation_requested: "Cancellation requested"
+  saved_session: "Saved session {file}"
+  save_session_failed: "Could not save session: {error}"
+  loaded_session: "Loaded session {file}"
+  load_session_failed: "Could not load session: {error}"
+  applied_to_all: "Applied enhancement settings to loaded pages"
+  failed_count: "{count} failed"
+  preferences_save_failed: "Could not save preferences: {error}"

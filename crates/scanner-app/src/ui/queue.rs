@@ -1,19 +1,20 @@
 use eframe::egui;
 use scanner_core::QueueStatus;
 
-use crate::state::QueueItem;
+use crate::{i18n::I18n, state::QueueItem};
 
 pub fn show(
     ui: &mut egui::Ui,
     items: &[QueueItem],
     selected: &mut Option<usize>,
+    i18n: &I18n,
 ) {
-    ui.heading("Pages");
+    ui.heading(i18n.tr("queue.title"));
     ui.add_space(8.0);
     if items.is_empty() {
-        ui.label("No pages imported yet.");
+        ui.label(i18n.tr("queue.empty"));
         ui.add_space(4.0);
-        ui.small("Use Open files or Open folder to begin.");
+        ui.small(i18n.tr("queue.empty_hint"));
         return;
     }
 
@@ -38,7 +39,7 @@ pub fn show(
                     if response.clicked() {
                         *selected = Some(index);
                     }
-                    ui.small(status_label(item.status));
+                    ui.small(status_label(i18n, item.status));
                     if let Some(metadata) = &item.metadata {
                         ui.small(format!(
                             "{} × {}",
@@ -59,17 +60,17 @@ pub fn show(
     });
 }
 
-fn status_label(status: QueueStatus) -> &'static str {
-    match status {
-        QueueStatus::NotStarted => "Not started",
-        QueueStatus::Loading => "Loading",
-        QueueStatus::Ready => "Ready",
-        QueueStatus::Previewing => "Previewing",
-        QueueStatus::Queued => "Queued",
-        QueueStatus::Processing => "Processing",
-        QueueStatus::Completed => "Completed",
-        QueueStatus::Skipped => "Skipped",
-        QueueStatus::Failed => "Failed",
-        QueueStatus::Cancelled => "Cancelled",
-    }
+fn status_label(i18n: &I18n, status: QueueStatus) -> String {
+    i18n.tr(match status {
+        QueueStatus::NotStarted => "status.not_started",
+        QueueStatus::Loading => "status.loading",
+        QueueStatus::Ready => "status.ready",
+        QueueStatus::Previewing => "status.previewing",
+        QueueStatus::Queued => "status.queued",
+        QueueStatus::Processing => "status.processing",
+        QueueStatus::Completed => "status.completed",
+        QueueStatus::Skipped => "status.skipped",
+        QueueStatus::Failed => "status.failed",
+        QueueStatus::Cancelled => "status.cancelled",
+    })
 }

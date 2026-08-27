@@ -1,6 +1,8 @@
 mod app;
 mod canvas;
+mod i18n;
 mod persistence;
+mod preferences;
 mod state;
 mod tasks;
 mod ui;
@@ -13,6 +15,8 @@ const SOURCE_HAN_SANS_SC: &str = "SourceHanSansSC-Regular";
 
 fn main() -> eframe::Result {
     let _logging_guard = init_logging();
+    let i18n = i18n::I18n::new(preferences::load().language);
+    let app_title = i18n.tr("app.title");
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1_440.0, 900.0])
@@ -20,11 +24,11 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "Document Scanner",
+        &app_title,
         native_options,
-        Box::new(|creation_context| {
+        Box::new(move |creation_context| {
             configure_fonts(&creation_context.egui_ctx);
-            app::ScannerApp::new(creation_context)
+            app::ScannerApp::new(creation_context, i18n)
                 .map(|app| Box::new(app) as Box<dyn eframe::App>)
                 .map_err(|error| {
                     Box::new(error) as Box<dyn std::error::Error + Send + Sync>

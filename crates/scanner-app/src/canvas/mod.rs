@@ -4,6 +4,8 @@ use eframe::egui::{
 };
 use scanner_core::{Point, Quadrilateral};
 
+use crate::i18n::I18n;
+
 pub struct CanvasView {
     zoom: f32,
     pan: Vec2,
@@ -46,6 +48,7 @@ impl CanvasView {
         texture: Option<&TextureHandle>,
         image_size: Option<[u32; 2]>,
         quadrilateral: &mut Quadrilateral,
+        i18n: &I18n,
     ) -> CanvasResponse {
         let available = ui.available_size().max(Vec2::new(240.0, 240.0));
         let (canvas_rect, response) =
@@ -57,7 +60,7 @@ impl CanvasView {
             painter.text(
                 canvas_rect.center(),
                 Align2::CENTER_CENTER,
-                "Open an image to start scanning",
+                i18n.tr("canvas.empty_hint"),
                 FontId::proportional(18.0),
                 Color32::from_gray(180),
             );
@@ -95,7 +98,7 @@ impl CanvasView {
             painter.text(
                 image_rect.center(),
                 Align2::CENTER_CENTER,
-                "Preparing preview…",
+                i18n.tr("canvas.preparing"),
                 FontId::proportional(16.0),
                 Color32::from_gray(180),
             );

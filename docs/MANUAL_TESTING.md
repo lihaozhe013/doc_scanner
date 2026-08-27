@@ -27,5 +27,11 @@ originals in a separate directory.
    operation finishes; no cancelled item is reported as successfully exported.
 9. Save and reopen a session. Move one source file temporarily and confirm the
    missing item is reported instead of silently discarded.
-10. Repeat the smoke test on macOS, Windows, and Linux. Record any native file
+10. Language: switch the **Language** picker between English and 简体中文.
+    Confirm the toolbar, queue, inspector, canvas, status messages, and file
+    dialog filters all change language, the window title updates, Chinese
+    text renders with the bundled font, and the choice survives an app
+    restart. With **System default** selected, confirm the language matches
+    the OS locale on restart. See [docs/I18N.md](I18N.md).
+11. Repeat the smoke test on macOS, Windows, and Linux. Record any native file
     dialog or renderer setup gap in the issue tracker before release.

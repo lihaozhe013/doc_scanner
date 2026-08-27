@@ -10,19 +10,21 @@ use tracing::{info, warn};
 
 use crate::{
     canvas::CanvasView,
+    i18n::I18n,
     persistence,
     state::{PreviewInfo, QueueItem},
     tasks::{CancellationToken, TaskId, TaskRunner, WorkerEvent},
-    ui::{inspector, queue},
+    ui::{inspector, queue, toolbar},
 };
 
 pub struct ScannerApp {
     worker: TaskRunner,
-    items: Vec<QueueItem>,
-    selected: Option<usize>,
+    pub(crate) items: Vec<QueueItem>,
+    pub(crate) selected: Option<usize>,
     canvas: CanvasView,
+    pub(crate) i18n: I18n,
     messages: VecDeque<String>,
-    export_tasks: HashMap<TaskId, (ImageId, CancellationToken)>,
+    pub(crate) export_tasks: HashMap<TaskId, (ImageId, CancellationToken)>,
     export_total: usize,
     export_completed: usize,
     export_failed: usize,
@@ -33,12 +35,14 @@ pub struct ScannerApp {
 impl ScannerApp {
     pub fn new(
         _creation_context: &CreationContext<'_>,
+        i18n: I18n,
     ) -> std::io::Result<Self> {
         Ok(Self {
             worker: TaskRunner::new()?,
             items: Vec::new(),
             selected: None,
             canvas: CanvasView::new(),
+            i18n,
             messages: VecDeque::new(),
             export_tasks: HashMap::new(),
             export_total: 0,
@@ -82,7 +86,14 @@ impl ScannerApp {
                             warn!(
                                 "[image_import] failed to load {item_name}: {error}"
                             );
-                            self.push_message(format!("{item_name}: {error}"));
+                            let message = self.i18n.text(
+                                "messages.load_failed",
+                                &[
+                                    ("name", item_name),
+                                    ("error", error.clone()),
+                                ],
+                            );
+                            self.push_message(message);
                         }
                     }
                 },
@@ -128,14 +139,13 @@ impl ScannerApp {
                                     QueueStatus::Completed;
                                 self.items[index].error = None;
                             }
-                            info!(
-                                "[export] completed {}",
-                                file_name_for_message(&export.path)
+                            let file_name = file_name_for_message(&export.path);
+                            info!("[export] completed {file_name}");
+                            let message = self.i18n.text(
+                                "messages.exported",
+                                &[("file", file_name)],
                             );
-                            self.push_message(format!(
-                                "Exported {}",
-                                file_name_for_message(&export.path)
-                            ));
+                            self.push_message(message);
                             self.export_completed =
                                 self.export_completed.saturating_add(1);
                         }
@@ -147,9 +157,11 @@ impl ScannerApp {
                             warn!(
                                 "[export] failed for item {item_id:?}: {error}"
                             );
-                            self.push_message(format!(
-                                "Export failed: {error}"
-                            ));
+                            let message = self.i18n.text(
+                                "messages.export_failed",
+                                &[("error", error.clone())],
+                            );
+                            self.push_message(message);
                             self.export_failed =
                                 self.export_failed.saturating_add(1);
                         }
@@ -161,7 +173,8 @@ impl ScannerApp {
                     if let Some(index) = self.index_for(item_id) {
                         self.items[index].status = QueueStatus::Cancelled;
                     }
-                    self.push_message("Export cancelled".to_owned());
+                    let message = self.i18n.tr("messages.export_cancelled");
+                    self.push_message(message);
                 }
             }
         }
@@ -213,7 +226,11 @@ impl ScannerApp {
                     "[processing] preview failed for {}: {error}",
                     item.display_name
                 );
-                self.push_message(format!("Preview failed: {error}"));
+                let message = self.i18n.text(
+                    "messages.preview_failed",
+                    &[("error", error.clone())],
+                );
+                self.push_message(message);
             }
         }
     }
@@ -276,106 +293,23 @@ impl ScannerApp {
         }
     }
 
-    fn show_toolbar(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::top("toolbar").show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.heading("Document Scanner");
-                ui.separator();
-                if ui
-                    .button("Open files")
-                    .on_hover_text("Open files (O)")
-                    .clicked()
-                {
-                    self.open_files();
-                }
-                if ui.button("Open folder").clicked() {
-                    self.open_folder();
-                }
-                if ui
-                    .add_enabled(
-                        !self.items.is_empty(),
-                        egui::Button::new("Previous"),
-                    )
-                    .on_hover_text("Previous page (P)")
-                    .clicked()
-                {
-                    self.select_relative(-1);
-                }
-                if ui
-                    .add_enabled(
-                        !self.items.is_empty(),
-                        egui::Button::new("Next"),
-                    )
-                    .on_hover_text("Next page (N)")
-                    .clicked()
-                {
-                    self.select_relative(1);
-                }
-                if ui
-                    .add_enabled(
-                        !self.items.is_empty(),
-                        egui::Button::new("Accept & next"),
-                    )
-                    .on_hover_text(
-                        "Accept current page and move to next (Enter)",
-                    )
-                    .clicked()
-                {
-                    self.select_relative(1);
-                }
-                if ui
-                    .button("Save session")
-                    .on_hover_text("Save session (Ctrl/Cmd+S)")
-                    .clicked()
-                {
-                    self.save_session();
-                }
-                if ui.button("Load session").clicked() {
-                    self.load_session();
-                }
-                ui.separator();
-                if ui
-                    .add_enabled(
-                        self.selected.is_some(),
-                        egui::Button::new("Export selected"),
-                    )
-                    .on_hover_text("Export selected page (Ctrl/Cmd+E)")
-                    .clicked()
-                {
-                    self.export_selected();
-                }
-                if ui
-                    .add_enabled(
-                        !self.items.is_empty(),
-                        egui::Button::new("Export all"),
-                    )
-                    .clicked()
-                {
-                    self.export_all();
-                }
-                if ui
-                    .add_enabled(
-                        !self.export_tasks.is_empty(),
-                        egui::Button::new("Cancel"),
-                    )
-                    .clicked()
-                {
-                    self.cancel_exports();
-                }
-            });
-        });
-    }
-
     fn show_canvas(&mut self, ui: &mut egui::Ui) {
         egui::CentralPanel::default().show(ui, |ui| {
             ui.horizontal(|ui| {
-                ui.label("Canvas");
-                if ui.button("Fit").on_hover_text("Reset view (R)").clicked() {
+                ui.label(self.i18n.tr("canvas.label"));
+                if ui
+                    .button(self.i18n.tr("canvas.fit"))
+                    .on_hover_text(self.i18n.tr("canvas.fit_hint"))
+                    .clicked()
+                {
                     self.canvas.reset_view();
                 }
                 let mut zoom = self.canvas.zoom();
                 if ui
-                    .add(egui::Slider::new(&mut zoom, 0.25..=4.0).text("Zoom"))
+                    .add(
+                        egui::Slider::new(&mut zoom, 0.25..=4.0)
+                            .text(self.i18n.tr("canvas.zoom")),
+                    )
                     .changed()
                 {
                     self.canvas.set_zoom(zoom);
@@ -384,11 +318,16 @@ impl ScannerApp {
                 if let Some(index) = self.selected
                     && let Some(preview) = &self.items[index].preview
                 {
+                    let message = self.i18n.text(
+                        "canvas.output_preview",
+                        &[
+                            ("width", preview.width.to_string()),
+                            ("height", preview.height.to_string()),
+                            ("revision", preview.revision.to_string()),
+                        ],
+                    );
                     ui.separator();
-                    ui.small(format!(
-                        "Output preview: {} × {} · revision {}",
-                        preview.width, preview.height, preview.revision
-                    ));
+                    ui.small(message);
                 }
             });
             ui.add_space(8.0);
@@ -396,7 +335,7 @@ impl ScannerApp {
             if let Some(index) = self.selected {
                 let mut preview_request = None;
                 ui.columns(2, |columns| {
-                    columns[0].heading("Source");
+                    columns[0].heading(self.i18n.tr("canvas.source"));
                     let (changed, item_id) = {
                         let before = self.items[index].edit.clone();
                         let item = &mut self.items[index];
@@ -410,6 +349,7 @@ impl ScannerApp {
                             source_texture,
                             image_size,
                             &mut item.edit.quadrilateral,
+                            &self.i18n,
                         );
                         let item_id = item.id;
                         let changed =
@@ -420,7 +360,8 @@ impl ScannerApp {
                         preview_request = Some(item_id);
                     }
 
-                    columns[1].heading("Processed preview");
+                    columns[1]
+                        .heading(self.i18n.tr("canvas.processed_preview"));
                     if let Some(texture) =
                         self.items[index].preview_texture.as_ref()
                         && let Some(preview) =
@@ -434,17 +375,23 @@ impl ScannerApp {
                             available_width,
                             (available_width / aspect).min(280.0),
                         );
+                        let message = self.i18n.text(
+                            "canvas.preview_size",
+                            &[
+                                ("width", preview.width.to_string()),
+                                ("height", preview.height.to_string()),
+                                ("revision", preview.revision.to_string()),
+                            ],
+                        );
                         columns[1].add(
                             egui::Image::new((texture.id(), size))
                                 .maintain_aspect_ratio(true),
                         );
-                        columns[1].small(format!(
-                            "{} × {} · revision {}",
-                            preview.width, preview.height, preview.revision
-                        ));
+                        columns[1].small(message);
                     } else {
-                        columns[1]
-                            .small("The processed preview will appear here.");
+                        let message =
+                            self.i18n.tr("canvas.preview_placeholder");
+                        columns[1].small(message);
                     }
                 });
                 if let Some(item_id) = preview_request {
@@ -452,7 +399,8 @@ impl ScannerApp {
                 }
             } else {
                 ui.centered_and_justified(|ui| {
-                    ui.heading("Import pages to begin");
+                    let heading = self.i18n.tr("canvas.import_prompt");
+                    ui.heading(heading);
                 });
             }
         });
@@ -467,7 +415,7 @@ impl ScannerApp {
                     let (action, edit_changed, item_id) = {
                         let item = &mut self.items[index];
                         let previous_revision = item.edit.revision;
-                        let action = inspector::show(ui, item);
+                        let action = inspector::show(ui, item, &self.i18n);
                         (
                             action,
                             item.edit.revision != previous_revision,
@@ -483,27 +431,37 @@ impl ScannerApp {
                     ui.separator();
                     ui.horizontal(|ui| {
                         if ui
-                            .add_enabled(self.items[index].can_undo(), egui::Button::new("Undo"))
+                            .add_enabled(
+                                self.items[index].can_undo(),
+                                egui::Button::new(
+                                    self.i18n.tr("inspector.undo"),
+                                ),
+                            )
                             .clicked()
                         {
                             self.edit_selected(EditAction::Undo);
                         }
                         if ui
-                            .add_enabled(self.items[index].can_redo(), egui::Button::new("Redo"))
+                            .add_enabled(
+                                self.items[index].can_redo(),
+                                egui::Button::new(
+                                    self.i18n.tr("inspector.redo"),
+                                ),
+                            )
                             .clicked()
                         {
                             self.edit_selected(EditAction::Redo);
                         }
                     });
-                    if ui.button("Reset quad").clicked()
+                    if ui.button(self.i18n.tr("inspector.reset_quad")).clicked()
                         && self.items[index].reset_quadrilateral()
                     {
                         self.request_preview(self.items[index].id);
                     }
                 } else {
-                    ui.heading("Inspector");
+                    ui.heading(self.i18n.tr("inspector.title"));
                     ui.add_space(8.0);
-                    ui.label("Select a page to edit its perspective and enhancement settings.");
+                    ui.label(self.i18n.tr("inspector.no_selection"));
                 }
             });
     }
@@ -524,25 +482,30 @@ impl ScannerApp {
                         ),
                     ));
                     if self.export_failed > 0 {
+                        let message = self.i18n.text(
+                            "messages.failed_count",
+                            &[("count", self.export_failed.to_string())],
+                        );
                         ui.colored_label(
                             egui::Color32::from_rgb(240, 120, 100),
-                            format!("{} failed", self.export_failed),
+                            message,
                         );
                     }
                 }
                 if let Some(message) = self.messages.back() {
                     ui.label(message);
                 } else {
-                    ui.small("Ready");
+                    ui.small(self.i18n.tr("messages.ready"));
                 }
                 ui.with_layout(
                     egui::Layout::right_to_left(egui::Align::Center),
                     |ui| {
                         if let Some(path) = &self.session_path {
-                            ui.small(format!(
-                                "Session: {}",
-                                file_name_for_message(path)
-                            ));
+                            let message = self.i18n.text(
+                                "messages.session",
+                                &[("file", file_name_for_message(path))],
+                            );
+                            ui.small(message);
                         }
                     },
                 );
@@ -550,10 +513,11 @@ impl ScannerApp {
         });
     }
 
-    fn open_files(&mut self) {
+    pub(crate) fn open_files(&mut self) {
+        let image_filter = self.i18n.tr("dialogs.raster_images");
         let Some(paths) = rfd::FileDialog::new()
             .add_filter(
-                "Raster images",
+                &image_filter,
                 &["jpg", "jpeg", "png", "bmp", "tif", "tiff"],
             )
             .pick_files()
@@ -563,7 +527,7 @@ impl ScannerApp {
         self.add_paths(paths);
     }
 
-    fn open_folder(&mut self) {
+    pub(crate) fn open_folder(&mut self) {
         let Some(folder) = rfd::FileDialog::new().pick_folder() else {
             return;
         };
@@ -578,7 +542,11 @@ impl ScannerApp {
                 }
             }
             Err(error) => {
-                self.push_message(format!("Could not read folder: {error}"));
+                let message = self.i18n.text(
+                    "messages.folder_read_failed",
+                    &[("error", error.to_string())],
+                );
+                self.push_message(message);
                 return;
             }
         }
@@ -610,7 +578,11 @@ impl ScannerApp {
             info!("[image_import] queued {item_name}");
         }
         if !self.items.is_empty() {
-            self.push_message(format!("{} page(s) in queue", self.items.len()));
+            let message = self.i18n.text(
+                "messages.pages_in_queue",
+                &[("count", self.items.len().to_string())],
+            );
+            self.push_message(message);
         }
     }
 
@@ -634,7 +606,7 @@ impl ScannerApp {
         item.status = QueueStatus::Previewing;
     }
 
-    fn export_selected(&mut self) {
+    pub(crate) fn export_selected(&mut self) {
         let Some(folder) = self.choose_export_folder() else {
             return;
         };
@@ -645,7 +617,7 @@ impl ScannerApp {
         self.queue_export(index, &folder);
     }
 
-    fn export_all(&mut self) {
+    pub(crate) fn export_all(&mut self) {
         let Some(folder) = self.choose_export_folder() else {
             return;
         };
@@ -656,7 +628,8 @@ impl ScannerApp {
             .filter_map(|(index, item)| item.metadata.as_ref().map(|_| index))
             .collect::<Vec<_>>();
         if indices.is_empty() {
-            self.push_message("No loaded pages are ready to export".to_owned());
+            let message = self.i18n.tr("messages.nothing_to_export");
+            self.push_message(message);
             return;
         }
         self.begin_export_batch();
@@ -668,7 +641,8 @@ impl ScannerApp {
     fn choose_export_folder(&mut self) -> Option<PathBuf> {
         let folder = rfd::FileDialog::new().pick_folder();
         if folder.is_none() {
-            self.push_message("Export cancelled".to_owned());
+            let message = self.i18n.tr("messages.export_cancelled");
+            self.push_message(message);
         }
         folder
     }
@@ -678,10 +652,11 @@ impl ScannerApp {
             return;
         };
         if item.metadata.is_none() {
-            self.push_message(format!(
-                "{} is not loaded yet",
-                item.display_name
-            ));
+            let message = self.i18n.text(
+                "messages.not_loaded",
+                &[("name", item.display_name.clone())],
+            );
+            self.push_message(message);
             return;
         }
         let (item_id, path, edit) =
@@ -707,49 +682,59 @@ impl ScannerApp {
         }
     }
 
-    fn cancel_exports(&mut self) {
+    pub(crate) fn cancel_exports(&mut self) {
         for (_, token) in self.export_tasks.values() {
             token.cancel();
         }
-        self.push_message("Cancellation requested".to_owned());
+        let message = self.i18n.tr("messages.cancellation_requested");
+        self.push_message(message);
     }
 
-    fn save_session(&mut self) {
+    pub(crate) fn save_session(&mut self) {
         let default_name = self
             .session_path
             .as_deref()
             .and_then(Path::file_name)
             .and_then(|name| name.to_str())
             .unwrap_or("document-scanner.scanner-session.json");
+        let session_filter = self.i18n.tr("dialogs.session_filter");
         let path = rfd::FileDialog::new()
             .set_file_name(default_name)
-            .add_filter("Scanner session", &["json"])
+            .add_filter(&session_filter, &["json"])
             .save_file();
         let Some(path) = path else {
             return;
         };
-        match persistence::save(&path, &self.items) {
+        let result = persistence::save(&path, &self.items);
+        match result {
             Ok(()) => {
                 self.session_path = Some(path.clone());
-                self.push_message(format!(
-                    "Saved session {}",
-                    file_name_for_message(&path)
-                ));
+                let message = self.i18n.text(
+                    "messages.saved_session",
+                    &[("file", file_name_for_message(&path))],
+                );
+                self.push_message(message);
             }
             Err(error) => {
-                self.push_message(format!("Could not save session: {error}"))
+                let message = self.i18n.text(
+                    "messages.save_session_failed",
+                    &[("error", error.to_string())],
+                );
+                self.push_message(message);
             }
         }
     }
 
-    fn load_session(&mut self) {
+    pub(crate) fn load_session(&mut self) {
+        let session_filter = self.i18n.tr("dialogs.session_filter");
         let Some(path) = rfd::FileDialog::new()
-            .add_filter("Scanner session", &["json"])
+            .add_filter(&session_filter, &["json"])
             .pick_file()
         else {
             return;
         };
-        match persistence::load(&path) {
+        let loaded = persistence::load(&path);
+        match loaded {
             Ok(session_items) => {
                 self.items = session_items
                     .into_iter()
@@ -760,13 +745,18 @@ impl ScannerApp {
                 for item in &self.items {
                     self.worker.load(item.id, item.path.clone());
                 }
-                self.push_message(format!(
-                    "Loaded session {}",
-                    file_name_for_message(&path)
-                ));
+                let message = self.i18n.text(
+                    "messages.loaded_session",
+                    &[("file", file_name_for_message(&path))],
+                );
+                self.push_message(message);
             }
             Err(error) => {
-                self.push_message(format!("Could not load session: {error}"))
+                let message = self.i18n.text(
+                    "messages.load_session_failed",
+                    &[("error", error.to_string())],
+                );
+                self.push_message(message);
             }
         }
     }
@@ -793,9 +783,8 @@ impl ScannerApp {
         for item_id in changed_ids {
             self.request_preview(item_id);
         }
-        self.push_message(
-            "Applied enhancement settings to loaded pages".to_owned(),
-        );
+        let message = self.i18n.tr("messages.applied_to_all");
+        self.push_message(message);
     }
 
     fn edit_selected(&mut self, action: EditAction) {
@@ -811,7 +800,7 @@ impl ScannerApp {
         }
     }
 
-    fn select_relative(&mut self, offset: isize) {
+    pub(crate) fn select_relative(&mut self, offset: isize) {
         if self.items.is_empty() {
             return;
         }
@@ -825,7 +814,7 @@ impl ScannerApp {
         self.items.iter().position(|item| item.id == item_id)
     }
 
-    fn push_message(&mut self, message: String) {
+    pub(crate) fn push_message(&mut self, message: String) {
         while self.messages.len() >= 4 {
             self.messages.pop_front();
         }
@@ -844,11 +833,13 @@ impl App for ScannerApp {
         let ctx = ui.ctx().clone();
         self.poll_worker(&ctx);
         self.handle_shortcuts(&ctx);
-        self.show_toolbar(ui);
+        toolbar::show(ui, self);
         egui::Panel::left("queue")
             .resizable(true)
             .default_size(240.0)
-            .show(ui, |ui| queue::show(ui, &self.items, &mut self.selected));
+            .show(ui, |ui| {
+                queue::show(ui, &self.items, &mut self.selected, &self.i18n);
+            });
         self.show_inspector(ui);
         self.show_status(ui);
         self.show_canvas(ui);
